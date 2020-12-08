@@ -1,0 +1,6 @@
+[submodule "libs/function2"]
+	path = libs/function2
+	url = https://github.com/Naios/function2.git
+[submodule "libs/concurrentqueue"]
+	path = libs/concurrentqueue
+	url = https://github.com/cameron314/concurrentqueue.git
