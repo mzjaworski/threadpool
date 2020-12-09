@@ -8,5 +8,5 @@ add_subdirectory(libs/function2)
 # for convenience
 include_directories(libs/function2/include libs/concurrentqueue)
 
-add_executable(ThreadPool example/main.cpp include/ThreadPool/ThreadPool.hpp)
+add_executable(ThreadPool example/example.cpp include/ThreadPool/ThreadPool.hpp)
 target_link_libraries(ThreadPool pthread function2)
