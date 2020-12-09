@@ -32,18 +32,45 @@ namespace mz{
 
             std::vector<std::thread> _pool;
 
+            std::condition_variable _new_task;
+            std::mutex _mtx;
+            bool _exit;
     };
 
-    ThreadPool::ThreadPool(unsigned int threads): _size(0){
+    ThreadPool::ThreadPool(unsigned int threads): _size(0), _exit(false){
         _pool.reserve(threads);
 
         for(unsigned int i = 0; i < threads; i++){
-            _pool.emplace_back([](){});
+            _pool.emplace_back([this]{
+                fu2::unique_function<void()> task;
+
+                for (;;){
+                    {
+                        std::unique_lock<std::mutex> lock(_mtx);
+                        _new_task.wait(lock, [this]{ return _size || _exit; });
+                    }
+
+                    if (_exit)
+                        return;
+
+                    if (_tasks.try_dequeue(task)){
+                        _size--;
+                        task();
+                    }
+                }
+
+            });
         }
     }
 
     ThreadPool::~ThreadPool(){
 
+        {
+            std::scoped_lock<std::mutex> lock(_mtx);
+            _exit = true;
+        }
+
+        _new_task.notify_all();
         for (auto& thread: _pool)
             thread.join();
     }
@@ -55,8 +82,13 @@ namespace mz{
                 [func = std::forward<Func>(func), ...args = std::forward<Args>(args)] { return func(args...); });
         auto ret =  task.get_future();
 
+        {
+            std::scoped_lock<std::mutex> lock(_mtx);
+            _size++;
+        }
+
+        _new_task.notify_one();
         _tasks.enqueue([task = std::move(task)]() mutable { task(); });
-        _size++;
 
         return ret;
     }
