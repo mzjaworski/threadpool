@@ -17,9 +17,17 @@ namespace mz{
             ThreadPool(unsigned int threads = std::thread::hardware_concurrency());
             ~ThreadPool();
 
+            // Used when the provided function has a void return type
+            template<typename Func, typename... Args,
+                    std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool> = true,
+                    std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool> = true>
+            void execute(Func&& func, Args&&... args);
+
+            // Used when the provided function has a non-void return type
             template <typename Func, typename... Args,
-                    std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool> = true>
-            auto execute(Func&& func, Args&&... args);
+                    std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool> = true,
+                    std::enable_if_t<std::negation_v<std::is_same<std::invoke_result_t<Func&&, Args&&...>, void>>, bool> = true>
+            auto execute(Func&& func, Args&&... args) -> std::future<decltype(func(args...))>;
 
             size_t getPoolSize();
 
@@ -75,9 +83,31 @@ namespace mz{
             thread.join();
     }
 
-    template <typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>>
-    auto ThreadPool::execute(Func&& func, Args&&... args){
 
+    template<typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>,
+            std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool>>
+    void ThreadPool::execute(Func&& func, Args&&... args){
+
+        //No void return type so no need to use a packaged_task
+        auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() { func(args...); };
+
+        {
+            std::scoped_lock<std::mutex> lock(_mtx);
+            _size++;
+        }
+
+        _new_task.notify_one();
+        _tasks.enqueue([task = std::move(task)]() mutable { task(); });
+    }
+
+
+    template <typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>,
+            std::enable_if_t<std::negation_v<std::is_same<std::invoke_result_t<Func&&, Args&&...>, void>>, bool>>
+    [[nodiscard("Supplied function has a non-void return type, maybe it's result should not be disregarded?")]]
+    auto ThreadPool::execute(Func&& func, Args&&... args) -> std::future<decltype(func(args...))> {
+
+        //This function has a non-void return type, therefore we create a packaged_task in order to return a future
+        // object to the calling thread
         auto task = std::packaged_task<decltype(func(args...))()>(
                 [func = std::forward<Func>(func), ...args = std::forward<Args>(args)] { return func(args...); });
         auto ret =  task.get_future();
