@@ -50,7 +50,7 @@ namespace mz{
                         _new_task.wait(lock, [this]{ return _size || _exit; });
                     }
 
-                    if (_exit)
+                    if (_exit && !_size)
                         return;
 
                     if (_tasks.try_dequeue(task)){
