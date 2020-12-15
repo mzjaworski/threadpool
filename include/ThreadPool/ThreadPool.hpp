@@ -1,6 +1,10 @@
+//          Copyright Mateusz Jaworski 2020 - 2020.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE.md or copy at
+//          https://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
-
 
 #include <future>
 #include <thread>
@@ -21,7 +25,7 @@ namespace mz{
             template<typename Func, typename... Args,
                     std::enable_if_t<std::is_nothrow_invocable_v<Func&&, Args&&...>, bool> = true,
                     std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool> = true>
-            void execute(Func&& func, Args&&... args);
+            auto execute(Func&& func, Args&&... args) -> void;
 
             // Used when the provided function can throw exceptions
             template<typename Func, typename... Args,
@@ -30,7 +34,7 @@ namespace mz{
                     std::is_same<std::invoke_result_t<Func&&, Args&&...>, void>>>, bool> = true>
             auto execute(Func&& func, Args&&... args) -> std::future<decltype(func(args...))>;
 
-            size_t getPoolSize();
+            auto getPoolSize() -> size_t;
 
             ThreadPool& operator=(ThreadPool&) = delete;
             ThreadPool(ThreadPool&) = delete;
@@ -45,6 +49,7 @@ namespace mz{
             std::mutex _mtx;
             bool _exit;
     };
+
 
     ThreadPool::ThreadPool(unsigned int threads): _size(0), _exit(false){
         _pool.reserve(threads);
@@ -84,7 +89,6 @@ namespace mz{
             thread.join();
     }
 
-
     template<typename Func, typename... Args, std::enable_if_t<std::is_nothrow_invocable_v<Func&&, Args&&...>, bool>,
             std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool>>
     void ThreadPool::execute(Func&& func, Args&&... args){
@@ -100,7 +104,6 @@ namespace mz{
         _new_task.notify_one();
         _tasks.enqueue([task = std::move(task)]() mutable { task(); });
     }
-
 
     template<typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>,
             std::enable_if_t<std::negation_v<std::conjunction<std::is_nothrow_invocable<Func&&, Args&&...>,
