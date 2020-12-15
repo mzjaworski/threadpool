@@ -91,7 +91,7 @@ namespace mz{
 
     template<typename Func, typename... Args, std::enable_if_t<std::is_nothrow_invocable_v<Func&&, Args&&...>, bool>,
             std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool>>
-    void ThreadPool::execute(Func&& func, Args&&... args){
+    auto ThreadPool::execute(Func&& func, Args&&... args) -> void {
 
         //No return type and function won't throw so no need to use a packaged_task
         auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() { func(args...); };
@@ -127,7 +127,7 @@ namespace mz{
         return ret;
     }
 
-    size_t ThreadPool::getPoolSize(){
+    auto ThreadPool::getPoolSize() -> size_t {
         return _pool.size();
     }
 
