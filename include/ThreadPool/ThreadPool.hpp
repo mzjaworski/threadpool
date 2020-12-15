@@ -88,7 +88,7 @@ namespace mz{
             std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool>>
     void ThreadPool::execute(Func&& func, Args&&... args){
 
-        //No void return type so no need to use a packaged_task
+        //Void return type so no need to use a packaged_task
         auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() { func(args...); };
 
         {
