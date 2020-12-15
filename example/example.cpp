@@ -16,8 +16,11 @@ int main() {
     //emits warning since we are disregarding the returned data
     pool.execute([](int x, int y){ return std::string("test"); }, 4, 5);
 
-    // But this is fine since this function does not return anything
-    pool.execute([](int x, int y){ x * y; }, 4, 5);
+    //same here since this function is not declared noexcept
+    pool.execute([](int x, int y){ std::string("test"); }, 4, 5);
+
+    // But this is does not generate warning since this function has a void return type and is noexcept
+    pool.execute([](int x, int y) noexcept { x * y; }, 4, 5);
 
     std::cout << (pool.getPoolSize() == std::thread::hardware_concurrency()) << std::endl;
 
