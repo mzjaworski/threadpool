@@ -27,7 +27,7 @@ namespace mz{
                     std::enable_if_t<std::is_same_v<std::invoke_result_t<Func&&, Args&&...>, void>, bool> = true>
             auto execute(Func&& func, Args&&... args) -> void;
 
-            // Used when the provided function can throw exceptions
+            // Used when the provided function can throw exceptions or has a non-void return type
             template<typename Func, typename... Args,
                     std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool> = true,
                     std::enable_if_t<std::negation_v<std::conjunction<std::is_nothrow_invocable<Func&&, Args&&...>,
