@@ -21,7 +21,7 @@ int main() {
     // execute method is capable of receiving a callable objects of any arbitrary type
     {
         // take in lambda
-        auto future = pool.execute([](){ return 5 + 6; });
+        std::future<int> future = pool.execute([](){ return 5 + 6; });
         std::cout << (future.get() == 11) << std::endl;
 
         future = pool.execute([](int x, int y){ return x * y; }, 4, 5);
