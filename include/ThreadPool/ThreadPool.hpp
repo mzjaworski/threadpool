@@ -94,7 +94,8 @@ namespace mz{
     auto ThreadPool::execute(Func&& func, Args&&... args) -> void {
 
         //No return type and function won't throw so no need to use a packaged_task
-        auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() { func(args...); };
+        auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable
+                { func(std::forward<Args>(args)...); };
 
         {
             std::scoped_lock<std::mutex> lock(_mtx);
@@ -113,7 +114,8 @@ namespace mz{
         //This function has a non-void return type and can possibly throw, therefore we create a packaged_task
         // in the order to return a future object to the calling thread
         auto task = std::packaged_task<decltype(func(args...))()>(
-                [func = std::forward<Func>(func), ...args = std::forward<Args>(args)] { return func(args...); });
+                [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable
+                { return func(std::forward<Args>(args)...); });
         auto ret =  task.get_future();
 
         {

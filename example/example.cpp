@@ -27,6 +27,12 @@ int main() {
         future = pool.execute([](int x, int y){ return x * y; }, 4, 5);
         std::cout << (future.get() == 20) << std::endl;
 
+        // templated lambda
+        auto print_templated = []<typename ...Args>(Args&& ...args)
+        { (std::cout << ... << args) << std::endl; };
+
+        std::future<void> ret = pool.execute(std::move(print_templated), 4, std::string(" it just works "), 56.7);
+
         // ordinary function
         future = pool.execute(addNumbers, 4, 5);
         std::cout << (future.get() == 9) << std::endl;
