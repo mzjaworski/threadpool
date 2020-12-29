@@ -9,6 +9,7 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include <stdexcept>
 #include <type_traits>
 
 #include "function2/function2.hpp"
@@ -103,7 +104,8 @@ namespace mz{
         }
 
         _new_task.notify_one();
-        _tasks.enqueue([task = std::move(task)]() mutable { task(); });
+        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+            throw std::runtime_error("Could not add a task to the thread pool");
     }
 
     template<typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>,
@@ -124,7 +126,8 @@ namespace mz{
         }
 
         _new_task.notify_one();
-        _tasks.enqueue([task = std::move(task)]() mutable { task(); });
+        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+            throw std::runtime_error("Could not add a task to the thread pool");
 
         return ret;
     }
