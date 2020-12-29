@@ -61,7 +61,7 @@ future = pool.execute([](int x, int y){ return x * y; }, 4, 5);
 std::cout << future.get() << std::endl;
 
 
-// lambda with capture
+// lambda with a capture
 int a = 5; int b = 6;
 auto ret = pool.execute([&](){ return a + b; });
 std::cout << ret.get() << std::endl;
