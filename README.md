@@ -45,7 +45,7 @@ std::cout << pool.getPoolSize() << std::endl;
 Pass in tasks to execute:
 ```c++
 // function used in a demo bellow
-int addNumbers(int x, int y){ return x +y; }
+int addNumbers(int x, int y){ return x + y; }
 
 .
 .
@@ -71,7 +71,7 @@ std::cout << ret.get() << std::endl;
 std::future<void> ret = pool.execute(
         []<typename ...Args>(Args&& ...args){ (std::cout << ... << args) << std::endl; },
         4, std::string(" it just works "), 56.7);
-std::cout << ret.get() << std::endl;
+ret.get();
 
 
 // ordinary function
@@ -108,13 +108,13 @@ mz::threadpool has three main methods:
 // this overload is chosen whenever the callable object is explicitly declared as noexcept and has a void return type,
 // in this case no internal exception handling is used which on one hand makes it faster but also more error prone 
 // if you dont know what you are doing
-- auto execute(Func&& func, Args&&... args) -> void
+- auto execute(Func&& func, Args&&... args) -> void;
 
 // this overload is chosen whenever the first one fails
 - auto execute(Func&& func, Args&&... args) -> std::future<decltype(func(args...))>;
 
 // returns number of threads inside of a thread pool 
-- auto getPoolSize() -> size_t
+- auto getPoolSize() -> size_t;
 ```
 
 # Dependencies
