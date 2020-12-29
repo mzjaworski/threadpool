@@ -6,7 +6,7 @@ A simple ThreadPool written in C++17/20.
 # add this project as a submodule:
 git submodule add <url>
 
-# download it's dependencies
+# download its dependencies
 cd threadpool
 git submodule init
 git submodule update
@@ -84,7 +84,7 @@ future = pool.execute(std::function<int(int, int)>(addNumbers), 4, 5);
 std::cout << future.get() << std::endl;
 ```
 
-Warnings and the execute method (void return type) overload:
+Examples of improper use and compiler warnings:
 ```c++
 // execute emits a warning since we are disregarding the future object holding the (possible) returned data or exception
 pool.execute([](int x, int y){ return std::string("test"); }, 4, 5);
@@ -124,7 +124,7 @@ This project introduces two dependencies:
 - cameron314/concurrentqueue 
 - Naios/function2
 
-concurrentqueue is used internally for a thread safe enqueueing and dequeueing.
+The concurrentqueue is used internally for thread safe enqueueing and dequeueing.
 
-function2 introduces fu2::unique_function, it allows us to hold move only types where as std::function requires 
+While function2 introduces fu2::unique_function, it allows us to holds move-only types whereas std::function requires 
 the target to be CopyConstructible. This in turn allows this threadpool to omit lots of possibly costly copy operations.
