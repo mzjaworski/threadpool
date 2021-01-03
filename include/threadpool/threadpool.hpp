@@ -98,11 +98,11 @@ namespace mz{
         auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable
                 { func(std::forward<Args>(args)...); };
 
-        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
-            throw std::runtime_error("Could not queue up a task");
-
         {
             std::scoped_lock<std::mutex> lock(_mtx);
+
+            if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+                throw std::runtime_error("Could not queue up a task");
             _size++;
         }
 
@@ -121,11 +121,11 @@ namespace mz{
                 { return func(std::forward<Args>(args)...); });
         auto ret =  task.get_future();
 
-        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
-            throw std::runtime_error("Could not queue up a task");
-
         {
             std::scoped_lock<std::mutex> lock(_mtx);
+
+            if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+                throw std::runtime_error("Could not queue up a task");
             _size++;
         }
 

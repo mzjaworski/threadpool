@@ -1,5 +1,3 @@
-A simple ThreadPool written in C++17/20.
-
 # Installation
 
 ```sh
