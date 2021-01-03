@@ -98,14 +98,15 @@ namespace mz{
         auto task = [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable
                 { func(std::forward<Args>(args)...); };
 
+        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+            throw std::runtime_error("Could not queue up a task");
+
         {
             std::scoped_lock<std::mutex> lock(_mtx);
             _size++;
         }
 
         _new_task.notify_one();
-        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
-            throw std::runtime_error("Could not add a task to the thread pool");
     }
 
     template<typename Func, typename... Args, std::enable_if_t<std::is_invocable_v<Func&&, Args&&...>, bool>,
@@ -120,15 +121,15 @@ namespace mz{
                 { return func(std::forward<Args>(args)...); });
         auto ret =  task.get_future();
 
+        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
+            throw std::runtime_error("Could not queue up a task");
+
         {
             std::scoped_lock<std::mutex> lock(_mtx);
             _size++;
         }
 
         _new_task.notify_one();
-        if (!_tasks.enqueue([task = std::move(task)]() mutable { task(); }))
-            throw std::runtime_error("Could not add a task to the thread pool");
-
         return ret;
     }
 
